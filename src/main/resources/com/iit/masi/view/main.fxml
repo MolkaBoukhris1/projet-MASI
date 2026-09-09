@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ColorPicker?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.iit.masi.controller.MainController"
+            prefHeight="750.0" prefWidth="1100.0"
+            style="-fx-background-color: #1e1e2e;">
+
+    <!-- ══════════════════════════════════════════════════
+         HAUT : Titre + barre d'actions
+    ══════════════════════════════════════════════════ -->
+    <top>
+        <VBox style="-fx-background-color: #2a2a3e; -fx-padding: 0;">
+
+            <!-- Titre -->
+            <HBox alignment="CENTER"
+                  style="-fx-padding: 10 16 8 16; -fx-background-color: #12122a;">
+                <Label text="Application de Dessin - MASI"
+                       style="-fx-font-size: 17px; -fx-font-weight: bold;
+                              -fx-text-fill: #e0e0ff;"/>
+            </HBox>
+
+            <!-- Barre d'actions -->
+            <HBox spacing="8" alignment="CENTER_LEFT"
+                  style="-fx-padding: 8 14 8 14; -fx-background-color: #2a2a3e;">
+
+                <Button fx:id="undoBtn" text="Annuler" onAction="#onUndo"
+                        style="-fx-background-color: #3d3d5c; -fx-text-fill: #cdd6f4;
+                               -fx-font-size: 12px; -fx-padding: 6 12;
+                               -fx-background-radius: 6;"/>
+                <Button fx:id="redoBtn" text="Refaire" onAction="#onRedo"
+                        style="-fx-background-color: #3d3d5c; -fx-text-fill: #cdd6f4;
+                               -fx-font-size: 12px; -fx-padding: 6 12;
+                               -fx-background-radius: 6;"/>
+
+                <Separator orientation="VERTICAL"/>
+
+                <Button text="Supprimer forme" onAction="#onDeleteSelectedShape"
+                        style="-fx-background-color: #e67e22; -fx-text-fill: white;
+                               -fx-font-size: 12px; -fx-padding: 6 12;
+                               -fx-background-radius: 6; -fx-font-weight: bold;"/>
+                <Button fx:id="clearBtn" text="Effacer tout" onAction="#onClear"
+                        style="-fx-background-color: #c0392b; -fx-text-fill: white;
+                               -fx-font-size: 12px; -fx-padding: 6 12;
+                               -fx-background-radius: 6;"/>
+
+                <Separator orientation="VERTICAL"/>
+
+                <Button fx:id="saveBtn" text="Sauvegarder" onAction="#onSave"
+                        style="-fx-background-color: #27ae60; -fx-text-fill: white;
+                               -fx-font-size: 12px; -fx-padding: 6 14;
+                               -fx-background-radius: 6; -fx-font-weight: bold;"/>
+                <Button fx:id="loadBtn" text="Charger" onAction="#onLoad"
+                        style="-fx-background-color: #2980b9; -fx-text-fill: white;
+                               -fx-font-size: 12px; -fx-padding: 6 14;
+                               -fx-background-radius: 6;"/>
+                <Button fx:id="deleteBtn" text="Supprimer dessin" onAction="#onDelete"
+                        style="-fx-background-color: #922b21; -fx-text-fill: white;
+                               -fx-font-size: 12px; -fx-padding: 6 12;
+                               -fx-background-radius: 6;"/>
+
+                <Separator orientation="VERTICAL"/>
+
+                <CheckBox fx:id="showLabelsCheck" text="Afficher noms"
+                          onAction="#onToggleLabels"
+                          style="-fx-text-fill: #cdd6f4; -fx-font-size: 12px;"/>
+
+                <Separator orientation="VERTICAL"/>
+
+                <Label text="Log :"
+                       style="-fx-text-fill: #a0a0c0; -fx-font-size: 12px;"/>
+                <ComboBox fx:id="logStrategyCombo" prefWidth="140"/>
+            </HBox>
+        </VBox>
+    </top>
+
+    <!-- ══════════════════════════════════════════════════
+         GAUCHE : Panneau formes + couleur + épaisseur
+    ══════════════════════════════════════════════════ -->
+    <left>
+        <VBox spacing="0"
+              prefWidth="160"
+              style="-fx-background-color: #2a2a3e;
+                     -fx-padding: 10 0 10 0;
+                     -fx-border-color: #3d3d5c;
+                     -fx-border-width: 0 1 0 0;">
+
+            <!-- FORMES 2D -->
+            <Label text="  FORMES 2D"
+                   style="-fx-text-fill: #888aaa; -fx-font-size: 10px;
+                          -fx-font-weight: bold; -fx-padding: 6 10 4 10;"/>
+
+            <RadioButton fx:id="rectangleBtn" text="Rectangle"
+                         onAction="#onShapeSelected"
+                         style="-fx-text-fill: #cdd6f4; -fx-font-size: 12px;
+                                -fx-padding: 6 10;">
+                <toggleGroup>
+                    <ToggleGroup fx:id="shapeGroup"/>
+                </toggleGroup>
+            </RadioButton>
+            <RadioButton fx:id="circleBtn" text="Cercle"
+                         toggleGroup="$shapeGroup" onAction="#onShapeSelected"
+                         style="-fx-text-fill: #cdd6f4; -fx-font-size: 12px;
+                                -fx-padding: 6 10;"/>
+            <RadioButton fx:id="ellipseBtn" text="Ellipse"
+                         toggleGroup="$shapeGroup" onAction="#onShapeSelected"
+                         style="-fx-text-fill: #cdd6f4; -fx-font-size: 12px;
+                                -fx-padding: 6 10;"/>
+            <RadioButton fx:id="lineBtn" text="Ligne"
+                         toggleGroup="$shapeGroup" onAction="#onShapeSelected"
+                         style="-fx-text-fill: #cdd6f4; -fx-font-size: 12px;
+                                -fx-padding: 6 10;"/>
+
+            <Separator style="-fx-padding: 4 10;"/>
+
+            <!-- FORMES 3D -->
+            <Label text="  FORMES 3D"
+                   style="-fx-text-fill: #5b9bd5; -fx-font-size: 10px;
+                          -fx-font-weight: bold; -fx-padding: 4 10 4 10;"/>
+
+            <RadioButton fx:id="cube3DBtn" text="Cube 3D"
+                         toggleGroup="$shapeGroup" onAction="#onShapeSelected"
+                         style="-fx-text-fill: #89b4fa; -fx-font-size: 12px;
+                                -fx-padding: 6 10;"/>
+            <RadioButton fx:id="sphere3DBtn" text="Sphere 3D"
+                         toggleGroup="$shapeGroup" onAction="#onShapeSelected"
+                         style="-fx-text-fill: #89b4fa; -fx-font-size: 12px;
+                                -fx-padding: 6 10;"/>
+            <RadioButton fx:id="cylinder3DBtn" text="Cylindre 3D"
+                         toggleGroup="$shapeGroup" onAction="#onShapeSelected"
+                         style="-fx-text-fill: #89b4fa; -fx-font-size: 12px;
+                                -fx-padding: 6 10;"/>
+
+            <Separator style="-fx-padding: 4 10;"/>
+
+            <!-- COULEUR -->
+            <Label text="  COULEUR"
+                   style="-fx-text-fill: #888aaa; -fx-font-size: 10px;
+                          -fx-font-weight: bold; -fx-padding: 4 10 4 10;"/>
+            <HBox alignment="CENTER" style="-fx-padding: 2 10 6 10;">
+                <ColorPicker fx:id="colorPicker" prefWidth="136"/>
+            </HBox>
+
+            <!-- EPAISSEUR -->
+            <Label text="  EPAISSEUR"
+                   style="-fx-text-fill: #888aaa; -fx-font-size: 10px;
+                          -fx-font-weight: bold; -fx-padding: 4 10 4 10;"/>
+            <HBox alignment="CENTER" style="-fx-padding: 2 10 10 10;">
+                <Slider fx:id="strokeWidthSlider" min="1" max="10" value="2"
+                        showTickLabels="true" showTickMarks="true"
+                        majorTickUnit="3" minorTickCount="2"
+                        prefWidth="136"/>
+            </HBox>
+        </VBox>
+    </left>
+
+    <!-- ══════════════════════════════════════════════════
+         CENTRE : Canvas de dessin
+    ══════════════════════════════════════════════════ -->
+    <center>
+        <StackPane style="-fx-background-color: #ffffff;
+                          -fx-border-color: #3d3d5c; -fx-border-width: 1;">
+            <Canvas fx:id="canvas" width="900" height="600"
+                    onMousePressed="#onCanvasMousePressed"
+                    onMouseDragged="#onCanvasMouseDragged"
+                    onMouseReleased="#onCanvasMouseReleased"
+                    style="-fx-cursor: crosshair;"/>
+        </StackPane>
+    </center>
+
+    <!-- ══════════════════════════════════════════════════
+         BAS : Barre de statut
+    ══════════════════════════════════════════════════ -->
+    <bottom>
+        <HBox alignment="CENTER_LEFT" spacing="16"
+              style="-fx-background-color: #12122a; -fx-padding: 5 14;">
+            <Label text="*"
+                   style="-fx-text-fill: #27ae60; -fx-font-size: 14px; -fx-font-weight: bold;"/>
+            <Label fx:id="statusLabel" text="Pret"
+                   style="-fx-font-size: 12px; -fx-text-fill: #a0a0c0;"/>
+        </HBox>
+    </bottom>
+
+</BorderPane>

@@ -1,0 +1,497 @@
+@startuml Application de Dessin - Diagramme de Classes Complet
+
+' ============================================
+' FACTORY PATTERN
+' ============================================
+
+package "Factory Pattern" {
+    class ShapeFactory {
+        {static} +createShape(type: ShapeType, ...): Shape
+        {static} +createShape(type: String, ...): Shape
+    }
+    
+    enum ShapeType {
+        RECTANGLE
+        CIRCLE
+        ELLIPSE
+        LINE
+    }
+    
+    abstract class Shape {
+        #startX: double
+        #startY: double
+        #endX: double
+        #endY: double
+        #color: Color
+        #strokeWidth: double
+        #id: String
+        +{abstract} draw(gc: GraphicsContext): void
+        +{abstract} contains(x: double, y: double): boolean
+        +{abstract} getType(): String
+    }
+    
+    class Rectangle {
+        +draw(gc: GraphicsContext): void
+        +contains(x: double, y: double): boolean
+        +getType(): String
+    }
+    
+    class Circle {
+        +draw(gc: GraphicsContext): void
+        +contains(x: double, y: double): boolean
+        +getType(): String
+    }
+    
+    class Ellipse {
+        +draw(gc: GraphicsContext): void
+        +contains(x: double, y: double): boolean
+        +getType(): String
+    }
+    
+    class Line {
+        +draw(gc: GraphicsContext): void
+        +contains(x: double, y: double): boolean
+        +getType(): String
+    }
+    
+    ShapeFactory ..> ShapeType
+    ShapeFactory ..> Shape : creates
+    Shape <|-- Rectangle
+    Shape <|-- Circle
+    Shape <|-- Ellipse
+    Shape <|-- Line
+}
+
+' ============================================
+' COMMAND PATTERN
+' ============================================
+
+package "Command Pattern" {
+    interface Command {
+        +execute(): void
+        +undo(): void
+        +getDescription(): String
+    }
+    
+    class AddShapeCommand {
+        -drawingManager: DrawingManager
+        -shape: Shape
+        +execute(): void
+        +undo(): void
+        +getDescription(): String
+    }
+    
+    class RemoveShapeCommand {
+        -drawingManager: DrawingManager
+        -shape: Shape
+        +execute(): void
+        +undo(): void
+        +getDescription(): String
+    }
+    
+    class CommandManager {
+        -undoStack: Stack<Command>
+        -redoStack: Stack<Command>
+        +executeCommand(command: Command): void
+        +undo(): void
+        +redo(): void
+        +canUndo(): boolean
+        +canRedo(): boolean
+        +clear(): void
+    }
+    
+    Command <|.. AddShapeCommand
+    Command <|.. RemoveShapeCommand
+    CommandManager o-- Command
+}
+
+' ============================================
+' STRATEGY PATTERN
+' ============================================
+
+package "Strategy Pattern" {
+    interface LogStrategy {
+        +log(message: String): void
+        +getStrategyName(): String
+    }
+    
+    class ConsoleLogStrategy {
+        +log(message: String): void
+        +getStrategyName(): String
+    }
+    
+    class FileLogStrategy {
+        -LOG_FILE: String
+        +log(message: String): void
+        +getStrategyName(): String
+    }
+    
+    class DatabaseLogStrategy {
+        -databaseManager: DatabaseManager
+        +log(message: String): void
+        +getStrategyName(): String
+    }
+    
+    class Logger {
+        -strategy: LogStrategy
+        +setStrategy(strategy: LogStrategy): void
+        +log(message: String): void
+        +getStrategy(): LogStrategy
+    }
+    
+    LogStrategy <|.. ConsoleLogStrategy
+    LogStrategy <|.. FileLogStrategy
+    LogStrategy <|.. DatabaseLogStrategy
+    Logger o-- LogStrategy
+}
+
+' ============================================
+' OBSERVER PATTERN
+' ============================================
+
+package "Observer Pattern" {
+    interface DrawingObserver {
+        +onDrawingChanged(): void
+    }
+}
+
+' ============================================
+' SINGLETON & SERVICE
+' ============================================
+
+package "Service Layer" {
+    class DrawingManager <<Singleton>> {
+        {static} -instance: DrawingManager
+        -shapes: List<Shape>
+        -observers: List<DrawingObserver>
+        -commandManager: CommandManager
+        -logger: Logger
+        {static} +getInstance(): DrawingManager
+        +setLogger(logger: Logger): void
+        +addObserver(observer: DrawingObserver): void
+        +removeObserver(observer: DrawingObserver): void
+        -notifyObservers(): void
+        +addShape(shape: Shape): void
+        +addShapeDirectly(shape: Shape): void
+        +removeShape(shape: Shape): void
+        +removeShapeDirectly(shape: Shape): void
+        +undo(): void
+        +redo(): void
+        +clear(): void
+        +loadShapes(shapes: List<Shape>): void
+        +getShapes(): List<Shape>
+        +findShapeAt(x: double, y: double): Shape
+        +canUndo(): boolean
+        +canRedo(): boolean
+    }
+    
+    DrawingManager o-- Shape
+    DrawingManager o-- DrawingObserver
+    DrawingManager o-- CommandManager
+    DrawingManager o-- Logger
+}
+
+' ============================================
+' REPOSITORY PATTERN
+' ============================================
+
+package "Repository Pattern" {
+    class DatabaseManager <<Singleton>> {
+        {static} -instance: DatabaseManager
+        -connection: Connection
+        -gson: Gson
+        {static} +getInstance(): DatabaseManager
+        -initializeDatabase(): void
+        -createTables(): void
+        +saveDrawing(name: String, shapes: List<Shape>): int
+        -saveShapes(drawingId: int, shapes: List<Shape>): void
+        +loadDrawing(drawingId: int): List<Shape>
+        +getAllDrawings(): List<DrawingInfo>
+        +insertLog(timestamp: String, message: String): void
+        +deleteDrawing(drawingId: int): void
+        +close(): void
+    }
+    
+    class DrawingInfo {
+        -id: int
+        -name: String
+        -createdAt: String
+        -updatedAt: String
+        +getId(): int
+        +getName(): String
+        +getCreatedAt(): String
+        +getUpdatedAt(): String
+        +toString(): String
+    }
+    
+    class ColorTypeAdapter {
+        +serialize(color: Color, ...): JsonElement
+        +deserialize(json: JsonElement, ...): Color
+    }
+    
+    DatabaseManager +-- DrawingInfo
+    DatabaseManager ..> ColorTypeAdapter
+}
+
+' ============================================
+' CONTROLLER
+' ============================================
+
+package "Presentation Layer" {
+    class MainController {
+        -canvas: Canvas
+        -shapeGroup: ToggleGroup
+        -colorPicker: ColorPicker
+        -strokeWidthSlider: Slider
+        -logStrategyCombo: ComboBox<String>
+        -drawingManager: DrawingManager
+        -logger: Logger
+        -gc: GraphicsContext
+        -startX: double
+        -startY: double
+        -isDrawing: boolean
+        -currentShapeType: ShapeType
+        +initialize(): void
+        -onCanvasMousePressed(event: MouseEvent): void
+        -onCanvasMouseDragged(event: MouseEvent): void
+        -onCanvasMouseReleased(event: MouseEvent): void
+        -onShapeSelected(): void
+        -onUndo(): void
+        -onRedo(): void
+        -onClear(): void
+        -onSave(): void
+        -onLoad(): void
+        -onDelete(): void
+        -changeLogStrategy(): void
+        -drawPreview(...): void
+        -redrawCanvas(): void
+        +onDrawingChanged(): void
+        -updateButtons(): void
+        -updateStatus(message: String): void
+        -showError(title: String, message: String): void
+    }
+    
+    class DrawingApplication {
+        +start(primaryStage: Stage): void
+        +stop(): void
+        {static} +main(args: String[]): void
+    }
+    
+    MainController ..|> DrawingObserver
+    MainController ..> DrawingManager
+    MainController ..> Logger
+    MainController ..> ShapeFactory
+    DrawingApplication ..> MainController
+}
+
+' ============================================
+' RELATIONS PRINCIPALES
+' ============================================
+
+AddShapeCommand ..> DrawingManager
+RemoveShapeCommand ..> DrawingManager
+DrawingManager ..> ShapeFactory
+DatabaseLogStrategy ..> DatabaseManager
+MainController ..> DatabaseManager
+
+@enduml
+
+' ============================================
+' DIAGRAMME DE SÉQUENCE - AJOUT DE FORME
+' ============================================
+
+@startuml Séquence - Ajout de Forme
+
+actor User
+participant MainController
+participant DrawingManager
+participant ShapeFactory
+participant CommandManager
+participant AddShapeCommand
+participant DrawingObserver
+
+User -> MainController: Click & Drag on Canvas
+activate MainController
+
+MainController -> MainController: onCanvasMousePressed()
+MainController -> MainController: onCanvasMouseDragged()
+MainController -> MainController: onCanvasMouseReleased()
+
+MainController -> ShapeFactory: createShape(type, x1, y1, x2, y2, color, width)
+activate ShapeFactory
+ShapeFactory --> MainController: shape
+deactivate ShapeFactory
+
+MainController -> DrawingManager: addShape(shape)
+activate DrawingManager
+
+DrawingManager -> AddShapeCommand: new AddShapeCommand(this, shape)
+activate AddShapeCommand
+AddShapeCommand --> DrawingManager: command
+deactivate AddShapeCommand
+
+DrawingManager -> CommandManager: executeCommand(command)
+activate CommandManager
+
+CommandManager -> AddShapeCommand: execute()
+activate AddShapeCommand
+AddShapeCommand -> DrawingManager: addShapeDirectly(shape)
+AddShapeCommand --> CommandManager
+deactivate AddShapeCommand
+
+CommandManager --> DrawingManager
+deactivate CommandManager
+
+DrawingManager -> DrawingManager: notifyObservers()
+DrawingManager -> DrawingObserver: onDrawingChanged()
+activate DrawingObserver
+
+DrawingObserver -> MainController: onDrawingChanged()
+MainController -> MainController: redrawCanvas()
+MainController -> MainController: updateButtons()
+
+DrawingObserver --> DrawingManager
+deactivate DrawingObserver
+
+DrawingManager --> MainController
+deactivate DrawingManager
+
+MainController --> User: Canvas Updated
+deactivate MainController
+
+@enduml
+
+' ============================================
+' DIAGRAMME DE SÉQUENCE - SAUVEGARDE
+' ============================================
+
+@startuml Séquence - Sauvegarde de Dessin
+
+actor User
+participant MainController
+participant DrawingManager
+participant DatabaseManager
+database SQLite
+
+User -> MainController: Click "Sauvegarder"
+activate MainController
+
+MainController -> MainController: onSave()
+MainController -> User: Show Dialog "Nom du dessin"
+User -> MainController: Enter "Mon Dessin"
+
+MainController -> DrawingManager: getShapes()
+activate DrawingManager
+DrawingManager --> MainController: List<Shape>
+deactivate DrawingManager
+
+MainController -> DatabaseManager: getInstance()
+activate DatabaseManager
+DatabaseManager --> MainController: instance
+deactivate DatabaseManager
+
+MainController -> DatabaseManager: saveDrawing("Mon Dessin", shapes)
+activate DatabaseManager
+
+DatabaseManager -> SQLite: INSERT INTO drawings
+activate SQLite
+SQLite --> DatabaseManager: drawingId
+deactivate SQLite
+
+loop for each shape
+    DatabaseManager -> SQLite: INSERT INTO shapes
+    activate SQLite
+    SQLite --> DatabaseManager: OK
+    deactivate SQLite
+end
+
+DatabaseManager --> MainController: drawingId
+deactivate DatabaseManager
+
+MainController -> User: Show Success Message
+deactivate MainController
+
+@enduml
+
+' ============================================
+' DIAGRAMME DE SÉQUENCE - UNDO
+' ============================================
+
+@startuml Séquence - Annulation (Undo)
+
+actor User
+participant MainController
+participant DrawingManager
+participant CommandManager
+participant AddShapeCommand
+
+User -> MainController: Click "Annuler"
+activate MainController
+
+MainController -> DrawingManager: undo()
+activate DrawingManager
+
+DrawingManager -> CommandManager: undo()
+activate CommandManager
+
+CommandManager -> CommandManager: pop from undoStack
+CommandManager -> AddShapeCommand: undo()
+activate AddShapeCommand
+
+AddShapeCommand -> DrawingManager: removeShapeDirectly(shape)
+DrawingManager -> DrawingManager: shapes.remove(shape)
+
+AddShapeCommand --> CommandManager
+deactivate AddShapeCommand
+
+CommandManager -> CommandManager: push to redoStack
+CommandManager --> DrawingManager
+deactivate CommandManager
+
+DrawingManager -> DrawingManager: notifyObservers()
+DrawingManager --> MainController
+deactivate DrawingManager
+
+MainController -> MainController: redrawCanvas()
+MainController -> MainController: updateButtons()
+
+MainController --> User: Canvas Updated
+deactivate MainController
+
+@enduml
+
+' ============================================
+' DIAGRAMME DE DÉPLOIEMENT
+' ============================================
+
+@startuml Diagramme de Déploiement
+
+node "Poste Utilisateur" {
+    component "JavaFX Application" {
+        [DrawingApplication]
+        [MainController]
+        [DrawingManager]
+        [ShapeFactory]
+        [CommandManager]
+        [Logger]
+    }
+    
+    database "SQLite" {
+        [drawing_app.db]
+    }
+    
+    file "Fichiers" {
+        [drawing_app.log]
+    }
+    
+    [DrawingApplication] --> [MainController]
+    [MainController] --> [DrawingManager]
+    [DrawingManager] --> [ShapeFactory]
+    [DrawingManager] --> [CommandManager]
+    [DrawingManager] --> [Logger]
+    [Logger] --> [drawing_app.log]
+    [Logger] --> [drawing_app.db]
+    [DrawingManager] --> [drawing_app.db]
+}
+
+@enduml
